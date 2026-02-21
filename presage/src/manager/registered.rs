@@ -566,9 +566,10 @@ impl<S: Store> Manager<S, Registered> {
             if let Err(error) =
                 set_account_attributes::<S>(&mut account_manager, &registration_data_inner).await
             {
-                error!(%error, "failed to set account attributes, this is problematic and should never happen!");
-                return Some(()); // stop signal
-            } else if let Err(error) = register_pre_keys(&store_inner, &mut account_manager).await {
+                warn!(%error, "failed to set account attributes; continuing anyway (non-fatal)");
+            }
+
+            if let Err(error) = register_pre_keys(&store_inner, &mut account_manager).await {
                 error!(%error, "failed to register pre-keys, this is problematic and should never happen!");
                 return Some(()); // stop signal
             }
@@ -1775,7 +1776,7 @@ async fn set_account_attributes<S: Store>(
 
     account_manager
         .set_account_attributes(AccountAttributes {
-            name: data.device_name().map(|d| d.to_string()),
+            name: None,
             registration_id: data.registration_id,
             pni_registration_id,
             signaling_key: None,
